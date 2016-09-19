@@ -1,0 +1,69 @@
+﻿<process name="TravelProcess" targetNamespace="http://bexee.sourceforge.net/Travel"
+	suppressJoinFailure="yes" xmlns:tns="http://bexee.sourceforge.net/Travel"
+	xmlns="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+	xmlns:services="http://bexee.sourceforge.net/Travel" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<partnerLinks>
+		<partnerLink name="client" partnerLinkType="tns:BookTravel"
+			myRole="TravelProvider" />
+		<partnerLink name="HotelOfferService" partnerLinkType="services:OfferTravelPLT"
+			myRole="OfferProvider" />
+		<partnerLink name="FlightOfferService" partnerLinkType="services:OfferTravelPLT"
+			myRole="OfferProvider" />
+		<partnerLink name="HotelBookingService" partnerLinkType="services:BookTravelPLT"
+			myRole="BookProvider" />
+		<partnerLink name="FlightBookingService" partnerLinkType="services:BookTravelPLT"
+			myRole="BookProvider" />
+	</partnerLinks>
+	<variables>
+		<variable name="userName" messageType="tns:TravelServiceRequestMessage" />
+		<variable name="response" messageType="tns:TravelServiceResponseMessage" />
+		<variable name="offerRequest" messageType="tns:getOfferRequest" />
+		<variable name="bookRequest" messageType="tns:bookRequest" />
+		<variable name="hotelOffer" messageType="tns:getOfferResponse" />
+		<variable name="flightOffer" messageType="tns:getOfferResponse" />
+		<variable name="hotelBooking" messageType="tns:bookResponse" />
+		<variable name="flightBooking" messageType="tns:bookResponse" />
+	</variables>
+	<sequence name="root-activity">
+		<receive name="startBooking" partnerLink="client" portType="services:InitTravel"
+			operation="initiate" variable="userName" createInstance="yes"></receive>
+		<assign name="assignOffer">
+			<copy>
+				<from variable="userName" part="value"></from>
+				<to variable="offerRequest" part="input"></to>
+			</copy>
+		</assign>
+		<flow name="offers">
+			<invoke name="invokeHotelOffer" partnerLink="HotelOfferService"
+				portType="services:TravelService" operation="getOffer"
+				inputVariable="offerRequest" outputVariable="hotelOffer"></invoke>
+			<invoke name="invokeFlightOffer" partnerLink="FlightOfferService"
+				portType="services:TravelService" operation="getOffer"
+				inputVariable="offerRequest" outputVariable="flightOffer"></invoke>
+		</flow>
+		<assign name="assignBook">
+			<copy>
+				<from variable="userName" part="value"></from>
+				<to variable="bookRequest" part="input"></to>
+			</copy>
+		</assign>
+		<flow name="bookings">
+			<invoke name="invokeHotelBooking" partnerLink="HotelBookingService"
+				portType="services:TravelService" operation="book" inputVariable="bookRequest"
+				outputVariable="hotelBooking"></invoke>
+			<invoke name="invokeFlightBooking" partnerLink="FlightBookingService"
+				portType="services:TravelService" operation="book" inputVariable="bookRequest"
+				outputVariable="flightBooking"></invoke>
+		</flow>
+		<assign name="assignResponse">
+			<copy>
+				<from variable="userName" part="value"></from>
+				<to variable="response" part="value"></to>
+			</copy>
+		</assign>
+		<reply name="bookReply" partnerLink="client" portType="services:InitTravel"
+			operation="initiate" variable="response"></reply>
+	</sequence>
+</process>
+      
+    
